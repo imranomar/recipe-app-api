@@ -16,6 +16,7 @@ services:
     #mapings the app directory to the app directory in our container
     volumes:
       - ./app:/app
+      - dev-static-data:/vol/web
     #command that is used to run the server
     #the defalt comamnd to use if we dont specify a command
     command: >
@@ -44,5 +45,5 @@ services:
 
 volumes:
   dev-db-data:
-
+  dev-static-data:
       

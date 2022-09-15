@@ -14,14 +14,15 @@ class RecipeSerializer(serializers.ModelSerializer):
 class RecipeDetailSerializer(RecipeSerializer):
     """ Serializers for recipes """
     class Meta(RecipeSerializer.Meta):
-        fields = RecipeSerializer.Meta.fields + ['description']
+        fields = RecipeSerializer.Meta.fields + ['description','image']
 
-class TagSerializer(serializers.ModelSerializer):
-    """ Serializers for recipes """
+
+class RecipeImageSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model = Tag
-        fields = ["__all__"]
-        read_only_fields = ["id","created_on"]
-
+        model  = Recipe
+        fields = ['id' , 'image']
+        read_only_fields = ['id']
+        extra_kwargs = {'image': {'required':'True'}}
 
 

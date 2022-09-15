@@ -19,6 +19,8 @@ from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
 )
+from django.conf.urls.static import static
+from django.conf import  settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -26,4 +28,12 @@ urlpatterns = [
     path("api/docs/",SpectacularSwaggerView.as_view(url_name='api-schema'),name='api-docs'  ),
     path("api/recipe/", include("recipe.urls")),
     path("api/user/", include("user.urls")),
+    path("api/tag/", include("tag.urls")),
 ]
+
+
+if settings.DEBUG: #if debug developemtn. in production we do not want to serve files from dev. server
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root = settings.MEDIA_ROOT,
+    )
