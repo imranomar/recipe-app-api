@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from .serlializers import TagSerializer
+from tag.serializers import TagSerializer
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from rest_framework import status, viewsets
@@ -13,6 +13,9 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()  # set the queryset of the ModelView
     authentication_classes = [TokenAuthentication] # set the authentication_classes of the ModelView
     permission_classes = [IsAuthenticated] # set the permission_classes of the ModelView
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user).order_by('-id').distinct()  # to only get unique recipies
 
     # #needed for swagger
     # def get_serializer_class(self):

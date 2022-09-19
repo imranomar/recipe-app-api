@@ -13,7 +13,7 @@ from PIL import Image
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Recipe
+from core.models import Recipe, Tag
 from core.models import recipe_image_file_path
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
@@ -128,9 +128,16 @@ class PrivateRecipeApiTests(TestCase):
             'time_minutes': 30,
             'price' : Decimal('5.99'),
         }
+
+
+        #rest_framework.response.Response
         res = self.client.post(RECIPES_URL, dict_payload) # send payload and get the result
 
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED) # check http response
+        try:
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED) # check http response
+        except AssertionError as e:
+            print("Test Failure. Response:\n" + str(res.data))
+
         recipe  = Recipe.objects.get(id = res.data['id']) # find the record from the response
         for k,v in dict_payload.items(): #go through all items in the payload and assert them
             self.assertEqual(getattr(recipe, k ), v) #get aatribute
@@ -232,6 +239,55 @@ class PrivateRecipeApiTests(TestCase):
 
         self.assertEqual(file_path, f'uploads/recipe/{uuid}.jpg')
 
+
+    def test_filter_by_tags(self):
+        """Test filtering recipies by tags"""
+        r1 = create_recipe(user=self.user, title="Malai Kofta")
+        r2 = create_recipe(user=self.user, title="Chicken Mughlai")
+
+        tag1 = Tag.objects.create(user=self.user, title="Vegetarian")
+        tag2 = Tag.objects.create(user=self.user, title="Pakistani")
+
+        r1.tags.add(tag1)
+        r2.tags.add(tag2)
+
+        r3 = create_recipe(user=self.user, title = "Vegetable Korma")
+
+        params = {'tags': f'{tag1.id},{tag2.id}'}
+
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(r1)
+        s2 =  RecipeSerializer(r2)
+        s3 = RecipeSerializer(r3)
+
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
+
+    # def test_filter_by_ingredients(self):
+    #
+    #     """Test filtering recipes by ingredients."""
+    #     r1 = create_recipe(user=self.user, title="Malai Kofta")
+    #     r2 = create_recipe(user=self.user, title="Chicken Mughlai")
+    #
+    #     in1 = Ingredient.objects.create(user=self.user, name = 'Cream')
+    #     in2 = Ingredient.objects.create(user=self.user, name='Chicken')
+    #
+    #     r3 = create_recipe(user=self.user, title = "Vegetable Korma")
+    #
+    #     params = {'ingredients': f'{in1.id},{in2.id}'}
+    #
+    #     res = self.client.get(RECIPES_URL, params)
+    #
+    #     s1 = RecipeSerializer(r1)
+    #     s2 = RecipeSerializer(r2)
+    #     s3 = RecipeSerializer(r3)
+    #
+    #     self.assertIn(s1.data, res.data)
+    #     self.assertIn(s2.data, res.data)
+    #     self.assertIn(s3.data, res.data)
 
 class ImageUploadTests(TestCase):
     """ Tests for the image upload API"""

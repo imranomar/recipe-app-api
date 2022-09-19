@@ -2,6 +2,13 @@
 Views for the recipe APIS
 """
 
+from drf_spectacular.utils import (
+    extend_schema_view,
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes,
+)
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,10 +25,31 @@ class RecipeViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication] # set the authentication_classes of the ModelView
     permission_classes = [IsAuthenticated] # set the permission_classes of the ModelView
 
+    def _params_to_ints(self, qs):
+        """Convert a list of string to integers"""
+        return [int(str_id) for str_id in qs.split(',')]
+
     #Over-ride queryset method to get the recipes only for the logged in user
     def get_queryset(self):
         """Retrieve recipes for authenticated user"""
-        return self.queryset.filter(user=self.request.user).order_by('-id')
+        #return self.queryset.filter(user=self.request.user).order_by('-id')
+
+        #get tags param e.g. ?tags=1,2,3 from the url
+        tags = self.request.query_params.get('tags')
+        ingredients = self.request.query_params.get('ingredients')
+        queryset = self.queryset # just for ease
+
+        if tags: #if tags parameters was passed in the url
+            tag_ids = self._params_to_ints(tags)
+            queryset = queryset.filter(tags__id__in = tag_ids)
+        if ingredients:
+            ingredient_ids = self._params_to_ints(ingredients)
+            queryset = queryset.filter(ingredients__id__in=ingredient_ids)
+
+        return queryset.filter(user = self.request.user).order_by('-id').distinct() #to only get unique recipies
+
+
+
 
     # Over-ride to change serializer_class depending on the action called. default is set above
     def get_serializer_class(self):
